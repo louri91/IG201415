@@ -1,43 +1,62 @@
 //**************************************************************************
-// Práctica 3
+// Práctica 1
 //
 // Domingo Martin Perandres 2013
 //
 // GPL
 //**************************************************************************
-//**************************************************************************
-// Realizado por:
 //
-// Nikolai Giovanni González López
+//  practica3.cc
+//  P3IG
 //
-// DNI: 74692748-H
+//  Created by Louri on 2/12/14.
+//  Copyright (c) 2014 Louri. All rights reserved.
+//
+// Realizado por: Amanda Fernández Piedra
+//
 //**************************************************************************
+
 
 #include "stdlib.h"
 #include "stdio.h"
 #include <GLUT/glut.h>
 #include <ctype.h>
 #include "user_code.h"
-#include <iostream>
-#include <string.h>
 #include <vector>
-#include "vertex.h"    
-#include "file_ply_stl.h"
-#include <OpenGL/gl.h>
+#include <math.h>
 
-// Caras y vertices
-std::vector<GLfloat> vertices_ply; // coordenadas de vértices
-std::vector<GLint> caras_ply;    // índices de vértices de triángulos
-const char* fichero;
-int n;
-Figura figura;
+using namespace std;
+
 typedef enum {ROBOT,FIG} _object_type;
 
 _object_type Object_type;
 
 Robot robot;
+bool avanzarRobot=true;
+int contador=0;
+bool pararAndar =false;
 // tamaño de los ejes
 const int AXIS_SIZE=5000;
+
+//CAMBIAR RUTA
+char *archivoPly = "/Users/Louri/Google Drive/PRACTICASUGR/IG/P3IG/P3IG/P3IG/beethoven.ply";
+char *perfil_1 = "/Users/Louri/Google Drive/PRACTICASUGR/IG/P3IG/P3IG/P3IG/cilindro.ply";
+char *perfil_2 = "/Users/Louri/Google Drive/PRACTICASUGR/IG/P3IG/P3IG/P3IG/perfil_2.ply";
+char *perfil_3 = "/Users/Louri/Google Drive/PRACTICASUGR/IG/P3IG/P3IG/P3IG/perfil_3.ply";
+char *perfil_4 = "/Users/Louri/Google Drive/PRACTICASUGR/IG/P3IG/P3IG/P3IG/perfil_4.ply";
+char *perfil_5 = "/Users/Louri/Google Drive/PRACTICASUGR/IG/P3IG/P3IG/P3IG/perfil_5.ply";
+char *perfil_6 = "/Users/Louri/Google Drive/PRACTICASUGR/IG/P3IG/P3IG/P3IG/perfil_6.ply";
+//char *cuboPly = "/Users/Louri/Google Drive/PRACTICASUGR/IG/P3IG/P3IG/P3IG/cubo.ply";
+int modo = 4;
+int numero;
+char* archivo;
+vector<_vertex3f> Vertices;
+vector<_vertex3i> Triangulos;
+vector<_vertex3f> Puntos;
+
+int num;
+vector<float> vertices;
+vector<int> caras;
 
 // variables que definen la posicion de la camara en coordenadas polares
 GLfloat Observer_distance;
@@ -56,7 +75,8 @@ int UI_window_pos_x=50,UI_window_pos_y=50,UI_window_width=500,UI_window_height=5
 
 void clear_window()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 }
 
 
@@ -66,12 +86,13 @@ void clear_window()
 
 void change_projection()
 {
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
 
-    //formato(x_minimo,x_maximo, y_minimo, y_maximo,Front_plane, plano_traser)
-    // Front_plane>0  Back_plane>PlanoDelantero)
-    glFrustum(-Window_width,Window_width,-Window_height,Window_height,Front_plane,Back_plane);
+glMatrixMode(GL_PROJECTION);
+glLoadIdentity();
+
+// formato(x_minimo,x_maximo, y_minimo, y_maximo,Front_plane, plano_traser)
+//  Front_plane>0  Back_plane>PlanoDelantero)
+glFrustum(-Window_width,Window_width,-Window_height,Window_height,Front_plane,Back_plane);
 }
 
 //**************************************************************************
@@ -80,12 +101,13 @@ void change_projection()
 
 void change_observer()
 {
-    //posicion del observador
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslatef(0,0,-Observer_distance);
-    glRotatef(Observer_angle_x,1,0,0);
-    glRotatef(Observer_angle_y,0,1,0);
+
+// posicion del observador
+glMatrixMode(GL_MODELVIEW);
+glLoadIdentity();
+glTranslatef(0,0,-Observer_distance);
+glRotatef(Observer_angle_x,1,0,0);
+glRotatef(Observer_angle_y,0,1,0);
 }
 
 //**************************************************************************
@@ -94,20 +116,20 @@ void change_observer()
 
 void draw_axis()
 {
-    glBegin(GL_LINES);
-    //eje X, color rojo
-    glColor3f(1,0,0);
-    glVertex3f(-AXIS_SIZE,0,0);
-    glVertex3f(AXIS_SIZE,0,0);
-    //eje Y, color verde
-    glColor3f(0,1,0);
-    glVertex3f(0,-AXIS_SIZE,0);
-    glVertex3f(0,AXIS_SIZE,0);
-    //eje Z, color azul
-    glColor3f(0,0,1);
-    glVertex3f(0,0,-AXIS_SIZE);
-    glVertex3f(0,0,AXIS_SIZE);
-    glEnd();
+glBegin(GL_LINES);
+// eje X, color rojo
+glColor3f(1,0,0);
+glVertex3f(-AXIS_SIZE,0,0);
+glVertex3f(AXIS_SIZE,0,0);
+// eje Y, color verde
+glColor3f(0,1,0);
+glVertex3f(0,-AXIS_SIZE,0);
+glVertex3f(0,AXIS_SIZE,0);
+// eje Z, color azul
+glColor3f(0,0,1);
+glVertex3f(0,0,-AXIS_SIZE);
+glVertex3f(0,0,AXIS_SIZE);
+glEnd();
 }
 
 
@@ -117,32 +139,10 @@ void draw_axis()
 
 void draw_objects()
 {
-    glColor3f(0,1,0);
-    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-
-    // Codigo para dibujar objetos
-
     switch (Object_type)
     {
-	case ROBOT: robot.dibujar(n); break;
-    	case FIG:
-	{
-	    switch (n) 
-    	    {
-    	        case 0:
-          	    figura.dibujar_vertices(); //modo puntos
-         	    break;           
-        	case 1 :
-        	    figura.dibujar_aristas(); //modo aristas
-        	    break;
-        	case 2:
-        	    figura.dibujar_triangulos(); //modo solido
-        	    break;
-        	case 3:
-        	    figura.dibujar_triangulos_ajedrez(); //modo ajedrez
-        	    break;
-    	    }
-	}; break;
+        case ROBOT: robot.dibujar(modo);
+            break;
     }
 }
 
@@ -152,12 +152,15 @@ void draw_objects()
 
 void draw_scene(void)
 {
-    clear_window();
-    change_observer();
-    draw_axis();
-    draw_objects();
-    glutSwapBuffers();
+
+clear_window();
+change_observer();
+draw_axis();
+draw_objects();
+glutSwapBuffers();
 }
+
+
 
 //***************************************************************************
 // Funcion llamada cuando se produce un cambio en el tamaño de la ventana
@@ -169,10 +172,11 @@ void draw_scene(void)
 
 void change_window_size(int Ancho1,int Alto1)
 {
-    change_projection();
-    glViewport(0,0,Ancho1,Alto1);
-    glutPostRedisplay();
+change_projection();
+glViewport(0,0,Ancho1,Alto1);
+glutPostRedisplay();
 }
+
 
 //***************************************************************************
 // Funcion llamada cuando se produce aprieta una tecla normal
@@ -185,43 +189,40 @@ void change_window_size(int Ancho1,int Alto1)
 
 void normal_keys(unsigned char Tecla1,int x,int y)
 {
-    switch (toupper(Tecla1)) 
+    if (toupper(Tecla1)=='Q') exit(0);
+    
+    
+    switch (Tecla1)
     {
-        case 'Q': exit(0); break;
-	case 'P': n = 0; break;
-	case 'L': n = 1; break;
-	case 'S': n = 2; break;
-	case 'A': n = 3; break;
-	case '1': Object_type=FIG;figura.leer_ply("perfil");figura.dibujar_aristas_perfil(); break; //perfil
-        case '2': Object_type=FIG;figura.revoluciones("perfil", 20); break; //objeto por revolucion
-        case 'W': Object_type=FIG;figura.revoluciones("perfil", 20);figura.dibujar_normales_vertices(); break;
-        case 'E': Object_type=FIG;figura.revoluciones("perfil", 20);figura.dibujar_normales_caras(); break;
-	case '3': Object_type=ROBOT;robot.dibujar(n); break;
-        case ' ': Object_type=ROBOT;robot.caminar(); break;
+        case 'p': modo=0;break;
+        case 'l': modo=1;break;
+        case 's': modo=2;break;
+        case 'a': modo=3;break;
+        case 'n': modo = 5;break;
+        case '1': leer_ply(archivoPly, false, vertices, caras, 0);break;
+        case '2': leer_ply(perfil_1, true, vertices, caras, 7);break;
+        case '3': Object_type=ROBOT; robot.dibujar(modo);break;
+        case '-': Observer_distance*=1.2;break;
+        case '+': Observer_distance/=1.2;break;
         case 'Z': Object_type=ROBOT;robot.cabeza_izquierda(); break;
-	case 'X': Object_type=ROBOT;robot.cabeza_derecha(); break;
-	case 'C': Object_type=ROBOT;robot.brazos_arriba(); break;
-	case 'V': Object_type=ROBOT;robot.brazos_abajo(); break;
-	case 'B': Object_type=ROBOT;robot.paso_adelante(); break;
-	case 'N': Object_type=ROBOT;robot.paso_atras(); break;
-	case 'D': Object_type=ROBOT;robot.brazod_arriba(); break;
-	case 'F': Object_type=ROBOT;robot.brazod_abajo(); break;
-	case 'G': Object_type=ROBOT;robot.brazoi_arriba(); break;
-	case 'H': Object_type=ROBOT;robot.brazoi_abajo(); break;
-	case '.': Object_type=ROBOT;robot.cuello_aumentar(); break;
-	case ',': Object_type=ROBOT;robot.cuello_disminuir(); break;
-	case 'J': Object_type=ROBOT;robot.piernad_arriba(); break;
-	case 'K': Object_type=ROBOT;robot.piernad_abajo(); break;
-	case 'O': Object_type=ROBOT;robot.piernai_arriba(); break;
-	case 'I': Object_type=ROBOT;robot.piernai_abajo(); break;
-	case 'U': Object_type=ROBOT;robot.brazod_aumentar(); break;
-	case 'Y': Object_type=ROBOT;robot.brazod_disminuir(); break;
-	case 'T': Object_type=ROBOT;robot.brazoi_aumentar(); break;
-	case 'R': Object_type=ROBOT;robot.brazoi_disminuir(); break;
-	case '-': Object_type=ROBOT;robot.act_giro_manos(); break;
-	case '<': Object_type=ROBOT;robot.put_act_laser(); break;
-
-	default: glutPostRedisplay();	
+        case 'z': Object_type=ROBOT;robot.cabeza_derecha(); break;
+        case 'X': Object_type=ROBOT;robot.brazos_arriba(); break;
+        case 'x': Object_type=ROBOT;robot.brazos_abajo(); break;
+        case 'C': Object_type=ROBOT;robot.brazod_arriba(); break;
+        case 'c': Object_type=ROBOT;robot.brazod_abajo(); break;
+        case 'V': Object_type=ROBOT;robot.brazoi_arriba(); break;
+        case 'v': Object_type=ROBOT;robot.brazoi_abajo(); break;
+        case 'B': Object_type=ROBOT;robot.paso_adelante(); break;
+        case 'b': Object_type=ROBOT;robot.paso_atras(); break;
+        case 'N': Object_type=ROBOT;robot.piernad_arriba(); break;
+        case 'M': Object_type=ROBOT;robot.piernad_abajo(); break;
+        case 'm': Object_type=ROBOT;robot.piernai_arriba(); break;
+        case 'L': Object_type=ROBOT;robot.piernai_abajo(); break;
+        case 'A': Object_type=ROBOT;robot.activarCaminar(); break;
+        case 'O': robot.aumentarVelocidad++;break;
+        case 'o': robot.aumentarVelocidad--;break;
+        case 'P': robot.act_giro_manos(); break;
+        default:glutPostRedisplay();
     }
     glutPostRedisplay();
 }
@@ -238,20 +239,21 @@ void normal_keys(unsigned char Tecla1,int x,int y)
 
 void special_keys(int Tecla1,int x,int y)
 {
-    switch (Tecla1)
-    {
+
+switch (Tecla1){
 	case GLUT_KEY_LEFT:Observer_angle_y--;break;
 	case GLUT_KEY_RIGHT:Observer_angle_y++;break;
 	case GLUT_KEY_UP:Observer_angle_x--;break;
 	case GLUT_KEY_DOWN:Observer_angle_x++;break;
 	case GLUT_KEY_PAGE_UP:Observer_distance*=1.2;break;
 	case GLUT_KEY_PAGE_DOWN:Observer_distance/=1.2;break;
-	case GLUT_KEY_F1:Observer_distance*=1.2;break;
-    	case GLUT_KEY_F2:Observer_distance/=1.2;break;
-	case GLUT_KEY_F12:Object_type=ROBOT; robot.robot_defecto(); break;
-    }
-    glutPostRedisplay();
+    case GLUT_KEY_F1:Observer_distance*=1.2;break;
+    case GLUT_KEY_F2:Observer_distance/=1.2;break;
+	}
+glutPostRedisplay();
 }
+
+
 
 //***************************************************************************
 // Funcion de incializacion
@@ -259,46 +261,50 @@ void special_keys(int Tecla1,int x,int y)
 
 void initialize(void)
 {
-    //se inicalizan la ventana y los planos de corte
-    Window_width=1;
-    Window_height=1;
-    Front_plane=2;
-    Back_plane=2000;
+// se inicalizan la ventana y los planos de corte
+Window_width=1;
+Window_height=1;
+Front_plane=1;
+Back_plane=1000;
 
-    //se inicia la posicion del observador, en el eje z
-    Observer_distance=3*Front_plane;
-    Observer_angle_x=0;
-    Observer_angle_y=0;
+// se inicia la posicion del observador, en el eje z
+Observer_distance=3*Front_plane;
+Observer_angle_x=0;
+Observer_angle_y=0;
 
-    //se indica cual sera el color para limpiar la ventana	(r,v,a,al)
-    //blanco=(1,1,1,1) rojo=(1,0,0,1), ...
-    glClearColor(1,1,1,1);
+// se indica cual sera el color para limpiar la ventana	(r,v,a,al)
+// blanco=(1,1,1,1) rojo=(1,0,0,1), ...
+glClearColor(1,1,1,1);
 
-    //se habilita el z-bufer
-    glEnable(GL_DEPTH_TEST);
-    change_projection();
-    glViewport(0,0,UI_window_width,UI_window_height);
-
-    Object_type=ROBOT;
+// se habilita el z-bufer
+glEnable(GL_DEPTH_TEST);
+change_projection();
+glViewport(0,0,UI_window_width,UI_window_height);
 }
 
-//******************************************************************************
-// Funcion IDLE
-// Procedimiento de fondo. Es llamado por glut cuando no hay eventos pendientes.
-//******************************************************************************
 void idle()
 {
     if (Object_type==ROBOT)
-	robot.control_animacion();
-
-    if(robot.get_laser())
-	robot.laser();
-
+        robot.control_animacion();
     if(robot.get_g_manos())
-	robot.girar_manos();
-
+        robot.girar_manos();
+    if(robot.getActivarCaminar()){
+        if(avanzarRobot==true){
+            robot.paso_adelante();
+            robot.cabeza_derecha();
+        }
+        else{
+            robot.paso_atras();
+            robot.cabeza_izquierda();
+        }
+    }
+    if(contador%35==0){
+        avanzarRobot=!avanzarRobot;
+    }
+    contador++;
     glutPostRedisplay();
 }
+
 
 //***************************************************************************
 // Programa principal
@@ -331,7 +337,7 @@ int main(int argc, char **argv)
 
     // llamada para crear la ventana, indicando el titulo (no se visualiza hasta que se llama
     // al bucle de eventos)
-    glutCreateWindow("Practica 3: Anacleto");
+    glutCreateWindow("Práctica 3. Robot");
 
     // asignación de la funcion llamada "dibujar" al evento de dibujo
     glutDisplayFunc(draw_scene);
@@ -342,7 +348,7 @@ int main(int argc, char **argv)
     // asignación de la funcion llamada "tecla_Especial" al evento correspondiente
     glutSpecialFunc(special_keys);
 
-    // asignación de la funcion "idle" para ejecución de fondo
+    // asignaci√≥n de la funcion "idle" para ejecuci√≥n de fondo
     glutIdleFunc(idle);
 
     // funcion de inicialización
